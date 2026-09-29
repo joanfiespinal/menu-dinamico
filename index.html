@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú Dinámico con JSON</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            color: #333;
+        }
+
+        header {
+            background: #222;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin-bottom: 8px;
+        }
+
+        nav {
+            background: #333;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+        }
+
+        nav ul li {
+            position: relative;
+        }
+
+        nav ul li a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 15px 20px;
+            transition: background 0.3s;
+        }
+
+        nav ul li a:hover {
+            background: #555;
+        }
+
+        /* SUBMENÚ */
+        nav ul li ul {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #444;
+            min-width: 180px;
+            z-index: 1000;
+        }
+
+        nav ul li:hover > ul {
+            display: block;
+        }
+
+        nav ul li ul li {
+            width: 100%;
+        }
+
+        nav ul li ul li a {
+            padding: 12px 15px;
+        }
+
+        main {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        section {
+            background: white;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        section h2 {
+            margin-bottom: 15px;
+            color: #222;
+        }
+
+        form {
+            display: grid;
+            gap: 12px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 15px;
+        }
+
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            background: #222;
+            color: white;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:hover {
+            background: #444;
+        }
+
+        .btn-editar {
+            background: #1769aa;
+        }
+
+        .btn-editar:hover {
+            background: #0d4f82;
+        }
+
+        .btn-eliminar {
+            background: #c62828;
+        }
+
+        .btn-eliminar:hover {
+            background: #8e1c1c;
+        }
+
+        .btn-cancelar {
+            background: #777;
+        }
+
+        .btn-cancelar:hover {
+            background: #555;
+        }
+
+        .opcion {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .opcion:last-child {
+            border-bottom: none;
+        }
+
+        .botones {
+            display: flex;
+            gap: 8px;
+        }
+
+        #mensaje {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+            color: white;
+        }
+
+        #formulario-edicion {
+            display: none;
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+
+        .info {
+            line-height: 1.7;
+        }
+
+        footer {
+            text-align: center;
+            background: #222;
+            color: white;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 700px) {
+
+            nav ul {
+                flex-direction: column;
+            }
+
+            nav ul li {
+                width: 100%;
+            }
+
+            nav ul li ul {
+                position: static;
+                width: 100%;
+            }
+
+            nav ul li:hover > ul {
+                display: block;
+            }
+
+            main {
+                margin: 15px;
+                padding: 10px;
+            }
+
+            section {
+                padding: 18px;
+            }
+
+            .opcion {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .botones {
+                width: 100%;
+            }
+
+            .botones button {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Menú Dinámico</h1>
+        <p>Menú generado utilizando JSON, HTML, CSS y JavaScript</p>
+    </header>
+
+    <!-- MENÚ DINÁMICO -->
+    <nav id="menu"></nav>
+
+    <main>
+
+        <!-- INFORMACIÓN -->
+        <section id="inicio">
+            <h2>Bienvenido</h2>
+            <p class="info">
+                Este proyecto demuestra cómo crear un menú dinámico utilizando
+                una estructura de datos JSON. Las opciones pueden agregarse,
+                modificarse o eliminarse sin cambiar directamente el código.
+            </p>
+        </section>
+
+        <!-- AGREGAR -->
+        <section>
+            <h2>Agregar nueva opción</h2>
+
+            <form id="formulario">
+
+                <div>
+                    <label for="id">ID:</label>
+                    <input type="number" id="id" min="1" required>
+                </div>
+
+                <div>
+                    <label for="nombre">Nombre:</label>
+                    <input type="text" id="nombre" maxlength="50" required>
+                </div>
+
+                <div>
+                    <label for="enlace">Enlace:</label>
+                    <input
+                        type="text"
+                        id="enlace"
+                        placeholder="#inicio o https://ejemplo.com"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label for="icono">Icono:</label>
+                    <input
+                        type="text"
+                        id="icono"
+                        maxlength="5"
+                        placeholder="🏠"
+                    >
+                </div>
+
+                <button type="submit">
+                    Agregar opción
+                </button>
+
+            </form>
+
+            <div id="mensaje"></div>
+        </section>
+
+        <!-- EDITAR -->
+        <section id="formulario-edicion">
+
+            <h2>Editar opción</h2>
+
+            <form id="form-edicion">
+
+                <div>
+                    <label for="editar-id">ID:</label>
+                    <input type="number" id="editar-id" readonly>
+                </div>
+
+                <div>
+                    <label for="editar-nombre">Nombre:</label>
+                    <input
+                        type="text"
+                        id="editar-nombre"
+                        maxlength="50"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label for="editar-enlace">Enlace:</label>
+                    <input
+                        type="text"
+                        id="editar-enlace"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label for="editar-icono">Icono:</label>
+                    <input
+                        type="text"
+                        id="editar-icono"
+                        maxlength="5"
+                    >
+                </div>
+
+                <div class="botones">
+
+                    <button type="submit" class="btn-editar">
+                        Guardar cambios
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn-cancelar"
+                        onclick="cancelarEdicion()"
+                    >
+                        Cancelar
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+        <!-- ADMINISTRACIÓN -->
+        <section>
+
+            <h2>Administrar menú</h2>
+
+            <div id="lista-opciones"></div>
+
+        </section>
+
+        <!-- INFORMACIÓN DEL PROYECTO -->
+        <section id="contacto">
+
+            <h2>Información del proyecto</h2>
+
+            <p class="info">
+                El menú utiliza JSON para almacenar las opciones y JavaScript
+                para generar dinámicamente la interfaz. Los cambios realizados
+                se almacenan en el navegador mediante localStorage.
+            </p>
+
+        </section>
+
+    </main>
+
+    <footer>
+        <p>Proyecto de Menú Dinámico - JSON</p>
+    </footer>
+
+
+    <!-- ============================= -->
+    <!-- DATOS JSON INICIALES -->
+    <!-- ============================= -->
+
+    <script id="datos-menu" type="application/json">
+
+    {
+        "menu": [
+
+            {
+                "id": 1,
+                "nombre": "Inicio",
+                "enlace": "#inicio",
+                "icono": "🏠"
+            },
+
+            {
+                "id": 2,
+                "nombre": "Productos",
+                "enlace": "#",
+                "icono": "🛍️",
+                "submenu": [
+
+                    {
+                        "id": 3,
+                        "nombre": "Laptops",
+                        "enlace": "#laptops"
+                    },
+
+                    {
+                        "id": 4,
+                        "nombre": "Celulares",
+                        "enlace": "#celulares"
+                    },
+
+                    {
+                        "id": 5,
+                        "nombre": "Accesorios",
+                        "enlace": "#accesorios"
+                    }
+
+                ]
+            },
+
+            {
+                "id": 6,
+                "nombre": "Ofertas",
+                "enlace": "#ofertas",
+                "icono": "🔥"
+            },
+
+            {
+                "id": 7,
+                "nombre": "Contacto",
+                "enlace": "#contacto",
+                "icono": "📞"
+            }
+
+        ]
+    }
+
+    </script>
+
+
+    <!-- ============================= -->
+    <!-- JAVASCRIPT -->
+    <!-- ============================= -->
+
+    <script>
+
+        /* =====================================
+           CARGAR DATOS JSON
+        ===================================== */
+
+        const datos =
+            document.getElementById("datos-menu").textContent;
+
+        const datosIniciales =
+            JSON.parse(datos);
+
+
+        /*
+           Primero intenta cargar los datos guardados
+           en localStorage.
+
+           Si no existen, utiliza los datos JSON iniciales.
+        */
+
+        let menuData;
+
+        try {
+
+            const datosGuardados =
+                localStorage.getItem("menuDinamico");
+
+            if (datosGuardados) {
+
+                menuData =
+                    JSON.parse(datosGuardados);
+
+            } else {
+
+                menuData =
+                    datosIniciales;
+
+            }
+
+        } catch (error) {
+
+            menuData =
+                datosIniciales;
+
+        }
+
+
+        let idEditando = null;
+
+
+        /* =====================================
+           GUARDAR DATOS EN LOCALSTORAGE
+        ===================================== */
+
+        function guardarDatos() {
+
+            localStorage.setItem(
+                "menuDinamico",
+                JSON.stringify(menuData)
+            );
+
+        }
+
+
+        /* =====================================
+           MOSTRAR MENÚ
+        ===================================== */
+
+        function mostrarMenu() {
+
+            const menu =
+                document.getElementById("menu");
+
+            menu.innerHTML = "";
+
+            const ul =
+                document.createElement("ul");
+
+
+            menuData.menu.forEach(opcion => {
+
+                const li =
+                    document.createElement("li");
+
+
+                const a =
+                    document.createElement("a");
+
+                a.href =
+                    opcion.enlace;
+
+                a.textContent =
+                    (opcion.icono ? opcion.icono + " " : "")
+                    + opcion.nombre;
+
+
+                li.appendChild(a);
+
+
+                /* SUBMENÚ */
+
+                if (
+                    opcion.submenu &&
+                    opcion.submenu.length > 0
+                ) {
+
+                    const subUl =
+                        document.createElement("ul");
+
+
+                    opcion.submenu.forEach(sub => {
+
+                        const subLi =
+                            document.createElement("li");
+
+
+                        const subA =
+                            document.createElement("a");
+
+                        subA.href =
+                            sub.enlace;
+
+                        subA.textContent =
+                            sub.nombre;
+
+
+                        subLi.appendChild(subA);
+
+                        subUl.appendChild(subLi);
+
+                    });
+
+
+                    li.appendChild(subUl);
+
+                }
+
+
+                ul.appendChild(li);
+
+            });
+
+
+            menu.appendChild(ul);
+
+        }
+
+
+        /* =====================================
+           MOSTRAR LISTA DE ADMINISTRACIÓN
+        ===================================== */
+
+        function mostrarLista() {
+
+            const lista =
+                document.getElementById("lista-opciones");
+
+            lista.innerHTML = "";
+
+
+            menuData.menu.forEach(opcion => {
+
+                const div =
+                    document.createElement("div");
+
+                div.className =
+                    "opcion";
+
+
+                const informacion =
+                    document.createElement("div");
+
+
+                informacion.textContent =
+                    (opcion.icono ? opcion.icono + " " : "")
+                    + opcion.nombre
+                    + " | ID: "
+                    + opcion.id
+                    + " | "
+                    + opcion.enlace;
+
+
+                const botones =
+                    document.createElement("div");
+
+                botones.className =
+                    "botones";
+
+
+                const editar =
+                    document.createElement("button");
+
+                editar.textContent =
+                    "Editar";
+
+                editar.className =
+                    "btn-editar";
+
+                editar.onclick =
+                    function() {
+
+                        abrirEdicion(opcion.id);
+
+                    };
+
+
+                const eliminar =
+                    document.createElement("button");
+
+                eliminar.textContent =
+                    "Eliminar";
+
+                eliminar.className =
+                    "btn-eliminar";
+
+                eliminar.onclick =
+                    function() {
+
+                        eliminarOpcion(opcion.id);
+
+                    };
+
+
+                botones.appendChild(editar);
+
+                botones.appendChild(eliminar);
+
+
+                div.appendChild(informacion);
+
+                div.appendChild(botones);
+
+
+                lista.appendChild(div);
+
+            });
+
+        }
+
+
+        /* =====================================
+           VALIDAR ENLACE
+        ===================================== */
+
+        function validarEnlace(enlace) {
+
+            if (!enlace) {
+
+                return false;
+
+            }
+
+
+            /*
+               Permitimos enlaces internos:
+               #inicio
+
+               o enlaces externos:
+               https://...
+               http://...
+            */
+
+            if (
+                enlace.startsWith("#") ||
+                enlace.startsWith("https://") ||
+                enlace.startsWith("http://")
+            ) {
+
+                return true;
+
+            }
+
+            return false;
+
+        }
+
+
+        /* =====================================
+           MOSTRAR MENSAJE
+        ===================================== */
+
+        function mostrarMensaje(
+            texto,
+            color = "#222"
+        ) {
+
+            const mensaje =
+                document.getElementById("mensaje");
+
+            mensaje.textContent =
+                texto;
+
+            mensaje.style.background =
+                color;
+
+            mensaje.style.display =
+                "block";
+
+
+            setTimeout(function() {
+
+                mensaje.style.display =
+                    "none";
+
+            }, 3000);
+
+        }
+
+
+        /* =====================================
+           AGREGAR OPCIÓN
+        ===================================== */
+
+        document
+            .getElementById("formulario")
+            .addEventListener(
+                "submit",
+                function(event) {
+
+                    event.preventDefault();
+
+
+                    const id =
+                        Number(
+                            document.getElementById("id").value
+                        );
+
+
+                    const nombre =
+                        document
+                            .getElementById("nombre")
+                            .value
+                            .trim();
+
+
+                    const enlace =
+                        document
+                            .getElementById("enlace")
+                            .value
+                            .trim();
+
+
+                    const icono =
+                        document
+                            .getElementById("icono")
+                            .value
+                            .trim();
+
+
+                    /* VALIDAR ID */
+
+                    const idExiste =
+                        menuData.menu.some(
+                            opcion => opcion.id === id
+                        );
+
+
+                    if (idExiste) {
+
+                        mostrarMensaje(
+                            "El ID ya existe. Utiliza otro.",
+                            "#c62828"
+                        );
+
+                        return;
+
+                    }
+
+
+                    /* VALIDAR ENLACE */
+
+                    if (!validarEnlace(enlace)) {
+
+                        mostrarMensaje(
+                            "El enlace no es válido.",
+                            "#c62828"
+                        );
+
+                        return;
+
+                    }
+
+
+                    /* CREAR OPCIÓN */
+
+                    const nuevaOpcion = {
+
+                        id: id,
+
+                        nombre: nombre,
+
+                        enlace: enlace,
+
+                        icono: icono
+
+                    };
+
+
+                    menuData.menu.push(
+                        nuevaOpcion
+                    );
+
+
+                    /* GUARDAR */
+
+                    guardarDatos();
+
+
+                    /* ACTUALIZAR */
+
+                    mostrarMenu();
+
+                    mostrarLista();
+
+
+                    /* LIMPIAR */
+
+                    document
+                        .getElementById("formulario")
+                        .reset();
+
+
+                    mostrarMensaje(
+                        "Opción agregada correctamente.",
+                        "#2e7d32"
+                    );
+
+                }
+            );
+
+
+        /* =====================================
+           ABRIR EDICIÓN
+        ===================================== */
+
+        function abrirEdicion(id) {
+
+            const opcion =
+                menuData.menu.find(
+                    item => item.id === id
+                );
+
+
+            if (!opcion) {
+
+                return;
+
+            }
+
+
+            idEditando =
+                id;
+
+
+            document
+                .getElementById("editar-id")
+                .value =
+                opcion.id;
+
+
+            document
+                .getElementById("editar-nombre")
+                .value =
+                opcion.nombre;
+
+
+            document
+                .getElementById("editar-enlace")
+                .value =
+                opcion.enlace;
+
+
+            document
+                .getElementById("editar-icono")
+                .value =
+                opcion.icono || "";
+
+
+            document
+                .getElementById("formulario-edicion")
+                .style.display =
+                "block";
+
+
+            window.scrollTo({
+                top: document
+                    .getElementById("formulario-edicion")
+                    .offsetTop - 20,
+                behavior: "smooth"
+            });
+
+        }
+
+
+        /* =====================================
+           GUARDAR EDICIÓN
+        ===================================== */
+
+        document
+            .getElementById("form-edicion")
+            .addEventListener(
+                "submit",
+                function(event) {
+
+                    event.preventDefault();
+
+
+                    if (idEditando === null) {
+
+                        return;
+
+                    }
+
+
+                    const nombre =
+                        document
+                            .getElementById("editar-nombre")
+                            .value
+                            .trim();
+
+
+                    const enlace =
+                        document
+                            .getElementById("editar-enlace")
+                            .value
+                            .trim();
+
+
+                    const icono =
+                        document
+                            .getElementById("editar-icono")
+                            .value
+                            .trim();
+
+
+                    /* VALIDAR ENLACE */
+
+                    if (!validarEnlace(enlace)) {
+
+                        mostrarMensaje(
+                            "El enlace no es válido.",
+                            "#c62828"
+                        );
+
+                        return;
+
+                    }
+
+
+                    const opcion =
+                        menuData.menu.find(
+                            item => item.id === idEditando
+                        );
+
+
+                    if (!opcion) {
+
+                        return;
+
+                    }
+
+
+                    opcion.nombre =
+                        nombre;
+
+                    opcion.enlace =
+                        enlace;
+
+                    opcion.icono =
+                        icono;
+
+
+                    /* GUARDAR CAMBIOS */
+
+                    guardarDatos();
+
+
+                    /* ACTUALIZAR */
+
+                    mostrarMenu();
+
+                    mostrarLista();
+
+
+                    cancelarEdicion();
+
+
+                    mostrarMensaje(
+                        "Cambios guardados correctamente.",
+                        "#2e7d32"
+                    );
+
+                }
+            );
+
+
+        /* =====================================
+           CANCELAR EDICIÓN
+        ===================================== */
+
+        function cancelarEdicion() {
+
+            idEditando =
+                null;
+
+
+            document
+                .getElementById("form-edicion")
+                .style.display =
+                "none";
+
+
+            document
+                .getElementById("form-edicion")
+                .reset();
+
+        }
+
+
+        /* =====================================
+           ELIMINAR OPCIÓN
+        ===================================== */
+
+        function eliminarOpcion(id) {
+
+            const confirmar =
+                confirm(
+                    "¿Seguro que deseas eliminar esta opción?"
+                );
+
+
+            if (!confirmar) {
+
+                return;
+
+            }
+
+
+            menuData.menu =
+                menuData.menu.filter(
+                    opcion => opcion.id !== id
+                );
+
+
+            /* GUARDAR CAMBIOS */
+
+            guardarDatos();
+
+
+            /* ACTUALIZAR */
+
+            mostrarMenu();
+
+            mostrarLista();
+
+
+            mostrarMensaje(
+                "Opción eliminada correctamente.",
+                "#2e7d32"
+            );
+
+        }
+
+
+        /* =====================================
+           INICIAR SISTEMA
+        ===================================== */
+
+        mostrarMenu();
+
+        mostrarLista();
+
+    </script>
+
+</body>
+</html>
